@@ -1,0 +1,656 @@
+components:
+
+    Stop:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "623e4567-e89b-12d3-a456-426614174006"
+        name:
+          type: string
+          example: "Fort Bus Stop"
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+              format: float
+              example: 6.9271
+            lng:
+              type: number
+              format: float
+              example: 79.8612
+          required:
+            - lat
+            - lng
+        address:
+          type: string
+          example: "Colombo Fort, Colombo 01"
+        description:
+          type: string
+          example: "Main bus stop in Colombo Fort area"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - name
+        - location
+        - address
+        - status
+
+paths:
+  /stops:
+    get:
+      summary: Retrieve all stops
+      description: Retrieve a paginated, filtered, and sorted list of stops.
+      operationId: getStops
+      tags:
+        - Stops
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[name]
+        - name: filter[location]
+          in: query
+          schema:
+            type: string
+          description: Filter by location (e.g., city)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name:asc, name:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., name:asc)
+      responses:
+        '200':
+          description: List of stops
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stop'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "623e4567-e89b-12d3-a456-426614174006"
+                    name: "Fort Bus Stop"
+                    location:
+                      lat: 6.9271
+                      lng: 79.8612
+                    address: "Colombo Fort, Colombo 01"
+                    description: "Main bus stop in Colombo Fort area"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new stop
+      description: Create a new stop.
+      operationId: createStop
+      tags:
+        - Stops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Fort Bus Stop"
+                location:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                      format: float
+                      example: 6.9271
+                    lng:
+                      type: number
+                      format: float
+                      example: 79.8612
+                  required:
+                    - lat
+                    - lng
+                address:
+                  type: string
+                  example: "Colombo Fort, Colombo 01"
+                description:
+                  type: string
+                  example: "Main bus stop in Colombo Fort area"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - name
+                - location
+                - address
+                - status
+            example:
+              name: "Fort Bus Stop"
+              location:
+                lat: 6.9271
+                lng: 79.8612
+              address: "Colombo Fort, Colombo 01"
+              description: "Main bus stop in Colombo Fort area"
+              status: "active"
+      responses:
+        '201':
+          description: Stop created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Stop'
+              example:
+                data:
+                  id: "623e4567-e89b-12d3-a456-426614174006"
+                  name: "Fort Bus Stop"
+                  location:
+                    lat: 6.9271
+                    lng: 79.8612
+                  address: "Colombo Fort, Colombo 01"
+                  description: "Main bus stop in Colombo Fort area"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Name is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires stops.create permission"
+      security:
+        - bearerAuth: []
+  /stops/{id}:
+    get:
+      summary: Retrieve a specific stop
+      description: Retrieve details of a specific stop, including associated routes.
+      operationId: getStop
+      tags:
+        - Stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stop ID
+      responses:
+        '200':
+          description: Stop details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Stop'
+              example:
+                data:
+                  id: "623e4567-e89b-12d3-a456-426614174006"
+                  name: "Fort Bus Stop"
+                  location:
+                    lat: 6.9271
+                    lng: 79.8612
+                  address: "Colombo Fort, Colombo 01"
+                  description: "Main bus stop in Colombo Fort area"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Stop not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a stop
+      description: Update an existing stop.
+      operationId: updateStop
+      tags:
+        - Stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stop ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Fort Bus Stop"
+                location:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                      format: float
+                      example: 6.9271
+                    lng:
+                      type: number
+                      format: float
+                      example: 79.8612
+                  required:
+                    - lat
+                    - lng
+                address:
+                  type: string
+                  example: "Colombo Fort, Colombo 01"
+                description:
+                  type: string
+                  example: "Updated main bus stop in Colombo Fort area"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - name
+                - location
+                - address
+                - status
+            example:
+              name: "Fort Bus Stop"
+              location:
+                lat: 6.9271
+                lng: 79.8612
+              address: "Colombo Fort, Colombo 01"
+              description: "Updated main bus stop in Colombo Fort area"
+              status: "active"
+      responses:
+        '200':
+          description: Stop updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Stop'
+              example:
+                data:
+                  id: "623e4567-e89b-12d3-a456-426614174006"
+                  name: "Fort Bus Stop"
+                  location:
+                    lat: 6.9271
+                    lng: 79.8612
+                  address: "Colombo Fort, Colombo 01"
+                  description: "Updated main bus stop in Colombo Fort area"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires stops.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a stop
+      description: Delete a stop, with reference check for routes or schedules.
+      operationId: deleteStop
+      tags:
+        - Stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stop ID
+      responses:
+        '200':
+          description: Stop deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Stop deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires stops.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete stop linked to routes or schedules"
+      security:
+        - bearerAuth: []
+  /stops/search:
+    get:
+      summary: Search stops
+      description: Search stops by name or location with fuzzy matching.
+      operationId: searchStops
+      tags:
+        - Stops
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search term for name or address
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+      responses:
+        '200':
+          description: List of matching stops
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stop'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "623e4567-e89b-12d3-a456-426614174006"
+                    name: "Fort Bus Stop"
+                    location:
+                      lat: 6.9271
+                      lng: 79.8612
+                    address: "Colombo Fort, Colombo 01"
+                    description: "Main bus stop in Colombo Fort area"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Query parameter is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /stops/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a stop
+      description: Retrieve paginated audit logs for a specific stop.
+      operationId: getStopAuditLogs
+      tags:
+        - Stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stop ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the stop
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        name: "Fort Bus Stop"
+                        location:
+                          lat: 6.9271
+                          lng: 79.8612
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires stops.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Stop not found"
+      security:
+        - bearerAuth: []

@@ -1,0 +1,554 @@
+components:
+
+    Operator:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "823e4567-e89b-12d3-a456-426614174008"
+        name:
+          type: string
+          example: "Colombo Transport Co."
+        contact:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+              example: "contact@colombotransport.lk"
+            phone:
+              type: string
+              example: "+94-11-2345678"
+          required:
+            - email
+            - phone
+        address:
+          type: string
+          example: "123 Main Street, Colombo 03"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - name
+        - contact
+        - address
+        - status
+
+paths:
+  /operators:
+    get:
+      summary: Retrieve all operators
+      description: Retrieve a paginated, filtered, and sorted list of operators.
+      operationId: getOperators
+      tags:
+        - Operators
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[name]
+          in: query
+          schema:
+            type: string
+          description: Filter by operator name (partial match)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name:asc, name:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., name:asc)
+      responses:
+        '200':
+          description: List of operators
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Operator'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "823e4567-e89b-12d3-a456-426614174008"
+                    name: "Colombo Transport Co."
+                    contact:
+                      email: "contact@colombotransport.lk"
+                      phone: "+94-11-2345678"
+                    address: "123 Main Street, Colombo 03"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new operator
+      description: Create a new operator.
+      operationId: createOperator
+      tags:
+        - Operators
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Colombo Transport Co."
+                contact:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      example: "contact@colombotransport.lk"
+                    phone:
+                      type: string
+                      example: "+94-11-2345678"
+                  required:
+                    - email
+                    - phone
+                address:
+                  type: string
+                  example: "123 Main Street, Colombo 03"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - name
+                - contact
+                - address
+                - status
+            example:
+              name: "Colombo Transport Co."
+              contact:
+                email: "contact@colombotransport.lk"
+                phone: "+94-11-2345678"
+              address: "123 Main Street, Colombo 03"
+              status: "active"
+      responses:
+        '201':
+          description: Operator created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Operator'
+              example:
+                data:
+                  id: "823e4567-e89b-12d3-a456-426614174008"
+                  name: "Colombo Transport Co."
+                  contact:
+                    email: "contact@colombotransport.lk"
+                    phone: "+94-11-2345678"
+                  address: "123 Main Street, Colombo 03"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Name is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires operators.create permission"
+      security:
+        - bearerAuth: []
+  /operators/{id}:
+    get:
+      summary: Retrieve a specific operator
+      description: Retrieve details of a specific operator, including associated permits and buses.
+      operationId: getOperator
+      tags:
+        - Operators
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Operator ID
+      responses:
+        '200':
+          description: Operator details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Operator'
+              example:
+                data:
+                  id: "823e4567-e89b-12d3-a456-426614174008"
+                  name: "Colombo Transport Co."
+                  contact:
+                    email: "contact@colombotransport.lk"
+                    phone: "+94-11-2345678"
+                  address: "123 Main Street, Colombo 03"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Operator not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update an operator
+      description: Update an existing operator.
+      operationId: updateOperator
+      tags:
+        - Operators
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Operator ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Colombo Transport Co."
+                contact:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      example: "contact@colombotransport.lk"
+                    phone:
+                      type: string
+                      example: "+94-11-2345678"
+                  required:
+                    - email
+                    - phone
+                address:
+                  type: string
+                  example: "123 Main Street, Colombo 03"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - name
+                - contact
+                - address
+                - status
+            example:
+              name: "Colombo Transport Co."
+              contact:
+                email: "contact@colombotransport.lk"
+                phone: "+94-11-2345678"
+              address: "123 Main Street, Colombo 03"
+              status: "active"
+      responses:
+        '200':
+          description: Operator updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Operator'
+              example:
+                data:
+                  id: "823e4567-e89b-12d3-a456-426614174008"
+                  name: "Colombo Transport Co."
+                  contact:
+                    email: "contact@colombotransport.lk"
+                    phone: "+94-11-2345678"
+                  address: "123 Main Street, Colombo 03"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires operators.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete an operator
+      description: Delete an operator, with reference check for permits or assignments.
+      operationId: deleteOperator
+      tags:
+        - Operators
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Operator ID
+      responses:
+        '200':
+          description: Operator deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Operator deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires operators.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete operator with active permits or assignments"
+      security:
+        - bearerAuth: []
+  /operators/{id}/audit:
+    get:
+      summary: Retrieve audit logs for an operator
+      description: Retrieve paginated audit logs for a specific operator.
+      operationId: getOperatorAuditLogs
+      tags:
+        - Operators
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Operator ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the operator
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        name: "Colombo Transport Co."
+                        contact:
+                          email: "contact@colombotransport.lk"
+                          phone: "+94-11-2345678"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires operators.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Operator not found"
+      security:
+        - bearerAuth: []

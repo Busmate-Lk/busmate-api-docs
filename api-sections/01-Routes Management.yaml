@@ -1,0 +1,796 @@
+openapi: 3.0.3
+info:
+  title: NTC Planning Section Official Portal API
+  description: API for managing routes, schedules, stops, permits, operators, buses, and dashboard metrics for the NTC (Sri Lanka) Planning Section.
+  version: 1.0.0
+  contact:
+    name: NTC Support
+    email: support@ntc.lk
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: /api/v1
+    description: Main API server
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "INVALID_INPUT"
+              message:
+                type: string
+                example: "Invalid input provided"
+      required:
+        - errors
+    Meta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+      required:
+        - total
+        - page
+        - limit
+    Route:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "Colombo - Kandy"
+        routeGroupId:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - name
+        - routeGroupId
+        - status
+    RouteGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        name:
+          type: string
+          example: "Colombo Region"
+        description:
+          type: string
+          example: "Routes in the Colombo area"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        routes:
+          type: array
+          items:
+            type: object
+            properties:
+              routeId:
+                type: string
+                format: uuid
+                example: "123e4567-e89b-12d3-a456-426614174000"
+              order:
+                type: integer
+                example: 1
+          example:
+            - routeId: "123e4567-e89b-12d3-a456-426614174000"
+              order: 1
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - name
+        - status
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "323e4567-e89b-12d3-a456-426614174002"
+        action:
+          type: string
+          enum: [create, update, delete]
+          example: "create"
+        userId:
+          type: string
+          format: uuid
+          example: "423e4567-e89b-12d3-a456-426614174003"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        details:
+          type: object
+          example:
+            previous: {}
+            current: {}
+      required:
+        - id
+        - action
+        - userId
+        - timestamp
+paths:
+  /route-groups:
+    get:
+      summary: Retrieve all route groups
+      description: Retrieve a paginated, filtered, and sorted list of route groups with their child routes.
+      operationId: getRouteGroups
+      tags:
+        - Route Groups
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[name]
+          in: query
+          schema:
+            type: string
+          description: Filter by route group name (partial match)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name:asc, name:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., name:asc)
+      responses:
+        '200':
+          description: List of route groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RouteGroup'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "223e4567-e89b-12d3-a456-426614174001"
+                    name: "Colombo Region"
+                    description: "Routes in the Colombo area"
+                    status: "active"
+                    routes:
+                      - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                        order: 1
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new route group
+      description: Create a new route group with optional child routes.
+      operationId: createRouteGroup
+      tags:
+        - Route Groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Colombo Region"
+                description:
+                  type: string
+                  example: "Routes in the Colombo area"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+                routes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      routeId:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      order:
+                        type: integer
+                        example: 1
+              required:
+                - name
+                - status
+            example:
+              name: "Colombo Region"
+              description: "Routes in the Colombo area"
+              status: "active"
+              routes:
+                - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                  order: 1
+      responses:
+        '201':
+          description: Route group created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RouteGroup'
+              example:
+                data:
+                  id: "223e4567-e89b-12d3-a456-426614174001"
+                  name: "Colombo Region"
+                  description: "Routes in the Colombo area"
+                  status: "active"
+                  routes:
+                    - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                      order: 1
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Name is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires route-groups.create permission"
+      security:
+        - bearerAuth: []
+  /route-groups/{id}:
+    get:
+      summary: Retrieve a specific route group
+      description: Retrieve details of a specific route group, including its child routes.
+      operationId: getRouteGroup
+      tags:
+        - Route Groups
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route group ID
+      responses:
+        '200':
+          description: Route group details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RouteGroup'
+              example:
+                data:
+                  id: "223e4567-e89b-12d3-a456-426614174001"
+                  name: "Colombo Region"
+                  description: "Routes in the Colombo area"
+                  status: "active"
+                  routes:
+                    - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                      order: 1
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Route group not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a route group
+      description: Update a route group and its child routes.
+      operationId: updateRouteGroup
+      tags:
+        - Route Groups
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route group ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Colombo Region"
+                description:
+                  type: string
+                  example: "Updated routes in the Colombo area"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+                routes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      routeId:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      order:
+                        type: integer
+                        example: 1
+              required:
+                - name
+                - status
+            example:
+              name: "Colombo Region"
+              description: "Updated routes in the Colombo area"
+              status: "active"
+              routes:
+                - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                  order: 1
+      responses:
+        '200':
+          description: Route group updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RouteGroup'
+              example:
+                data:
+                  id: "223e4567-e89b-12d3-a456-426614174001"
+                  name: "Colombo Region"
+                  description: "Updated routes in the Colombo area"
+                  status: "active"
+                  routes:
+                    - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                      order: 1
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires route-groups.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a route group
+      description: Delete a route group and its child routes, with reference check for active schedules or permits.
+      operationId: deleteRouteGroup
+      tags:
+        - Route Groups
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route group ID
+      responses:
+        '200':
+          description: Route group deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Route group deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires route-groups.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete route group with active schedules or permits"
+      security:
+        - bearerAuth: []
+  /route-groups/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a route group
+      description: Retrieve paginated audit logs for a specific route group.
+      operationId: getRouteGroupAuditLogs
+      tags:
+        - Route Groups
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route group ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the route group
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        name: "Colombo Region"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires route-groups.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /routes:
+    get:
+      summary: Retrieve all routes
+      description: Retrieve a paginated, filtered, and sorted list of routes.
+      operationId: getRoutes
+      tags:
+        - Routes
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[name]
+          in: query
+          schema:
+            type: string
+          description: Filter by route name (partial match)
+        - name: filter[routeGroupId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by route group ID
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name:asc, name:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., name:asc)
+      responses:
+        '200':
+          description: List of routes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Route'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "123e4567-e89b-12d3-a456-426614174000"
+                    name: "Colombo - Kandy"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /routes/{id}:
+    get:
+      summary: Retrieve a specific route
+      description: Retrieve details of a specific route.
+      operationId: getRoute
+      tags:
+        - Routes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route ID
+      responses:
+        '200':
+          description: Route details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Route'
+              example:
+                data:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  name: "Colombo - Kandy"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Route not found"
+      security:
+        - bearerAuth: []

@@ -1,0 +1,695 @@
+components:
+
+    ScheduleAssignment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "b23e4567-e89b-12d3-a456-426614174011"
+        scheduleId:
+          type: string
+          format: uuid
+          example: "523e4567-e89b-12d3-a456-426614174005"
+        permitId:
+          type: string
+          format: uuid
+          example: "723e4567-e89b-12d3-a456-426614174007"
+        busId:
+          type: string
+          format: uuid
+          example: "923e4567-e89b-12d3-a456-426614174009"
+        startDate:
+          type: string
+          format: date
+          example: "2025-07-12"
+        endDate:
+          type: string
+          format: date
+          example: "2025-12-31"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T12:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T12:23:00+05:30"
+      required:
+        - id
+        - scheduleId
+        - permitId
+        - busId
+        - startDate
+        - status
+
+paths:
+  /schedule-assignments:
+    get:
+      summary: Retrieve all schedule assignments
+      description: Retrieve a paginated, filtered, and sorted list of schedule assignments.
+      operationId: getScheduleAssignments
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[scheduleId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by schedule ID
+        - name: filter[permitId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by permit ID
+        - name: filter[busId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by bus ID
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [startDate:asc, startDate:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., startDate:asc)
+      responses:
+        '200':
+          description: List of schedule assignments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScheduleAssignment'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "b23e4567-e89b-12d3-a456-426614174011"
+                    scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                    permitId: "723e4567-e89b-12d3-a456-426614174007"
+                    busId: "923e4567-e89b-12d3-a456-426614174009"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    status: "active"
+                    createdAt: "2025-07-12T12:23:00+05:30"
+                    updatedAt: "2025-07-12T12:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new schedule assignment
+      description: Create a new schedule assignment.
+      operationId: createScheduleAssignment
+      tags:
+        - Schedule Assignments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduleId:
+                  type: string
+                  format: uuid
+                  example: "523e4567-e89b-12d3-a456-426614174005"
+                permitId:
+                  type: string
+                  format: uuid
+                  example: "723e4567-e89b-12d3-a456-426614174007"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - scheduleId
+                - permitId
+                - busId
+                - startDate
+                - status
+            example:
+              scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+              permitId: "723e4567-e89b-12d3-a456-426614174007"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              startDate: "2025-07-12"
+              endDate: "2025-12-31"
+              status: "active"
+      responses:
+        '201':
+          description: Schedule assignment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScheduleAssignment'
+              example:
+                data:
+                  id: "b23e4567-e89b-12d3-a456-426614174011"
+                  scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Schedule ID is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.create permission"
+      security:
+        - bearerAuth: []
+  /schedule-assignments/{id}:
+    get:
+      summary: Retrieve a specific schedule assignment
+      description: Retrieve details of a specific schedule assignment, including associated schedule, permit, and bus.
+      operationId: getScheduleAssignment
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule assignment ID
+      responses:
+        '200':
+          description: Schedule assignment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScheduleAssignment'
+              example:
+                data:
+                  id: "b23e4567-e89b-12d3-a456-426614174011"
+                  scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule assignment not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a schedule assignment
+      description: Update an existing schedule assignment.
+      operationId: updateScheduleAssignment
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule assignment ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduleId:
+                  type: string
+                  format: uuid
+                  example: "523e4567-e89b-12d3-a456-426614174005"
+                permitId:
+                  type: string
+                  format: uuid
+                  example: "723e4567-e89b-12d3-a456-426614174007"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - scheduleId
+                - permitId
+                - busId
+                - startDate
+                - status
+            example:
+              scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+              permitId: "723e4567-e89b-12d3-a456-426614174007"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              startDate: "2025-07-12"
+              endDate: "2025-12-31"
+              status: "active"
+      responses:
+        '200':
+          description: Schedule assignment updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScheduleAssignment'
+              example:
+                data:
+                  id: "b23e4567-e89b-12d3-a456-426614174011"
+                  scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:30:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a schedule assignment
+      description: Delete a schedule assignment.
+      operationId: deleteScheduleAssignment
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule assignment ID
+      responses:
+        '200':
+          description: Schedule assignment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Schedule assignment deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.delete permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule assignment not found"
+      security:
+        - bearerAuth: []
+  /schedule-assignments/bulk:
+    post:
+      summary: Create multiple schedule assignments
+      description: Create multiple schedule assignments in a single request.
+      operationId: createBulkScheduleAssignments
+      tags:
+        - Schedule Assignments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  scheduleId:
+                    type: string
+                    format: uuid
+                    example: "523e4567-e89b-12d3-a456-426614174005"
+                  permitId:
+                    type: string
+                    format: uuid
+                    example: "723e4567-e89b-12d3-a456-426614174007"
+                  busId:
+                    type: string
+                    format: uuid
+                    example: "923e4567-e89b-12d3-a456-426614174009"
+                  startDate:
+                    type: string
+                    format: date
+                    example: "2025-07-12"
+                  endDate:
+                    type: string
+                    format: date
+                    example: "2025-12-31"
+                  status:
+                    type: string
+                    enum: [active, inactive]
+                    example: "active"
+                required:
+                  - scheduleId
+                  - permitId
+                  - busId
+                  - startDate
+                  - status
+            example:
+              - scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                permitId: "723e4567-e89b-12d3-a456-426614174007"
+                busId: "923e4567-e89b-12d3-a456-426614174009"
+                startDate: "2025-07-12"
+                endDate: "2025-12-31"
+                status: "active"
+              - scheduleId: "523e4567-e89b-12d3-a456-426614174006"
+                permitId: "723e4567-e89b-12d3-a456-426614174008"
+                busId: "923e4567-e89b-12d3-a456-426614174010"
+                startDate: "2025-07-12"
+                endDate: "2025-12-31"
+                status: "active"
+      responses:
+        '201':
+          description: Schedule assignments created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScheduleAssignment'
+                  meta:
+                    type: object
+                    properties:
+                      createdCount:
+                        type: integer
+                        example: 2
+              example:
+                data:
+                  - id: "b23e4567-e89b-12d3-a456-426614174011"
+                    scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                    permitId: "723e4567-e89b-12d3-a456-426614174007"
+                    busId: "923e4567-e89b-12d3-a456-426614174009"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    status: "active"
+                    createdAt: "2025-07-12T12:23:00+05:30"
+                    updatedAt: "2025-07-12T12:23:00+05:30"
+                  - id: "b23e4567-e89b-12d3-a456-426614174012"
+                    scheduleId: "523e4567-e89b-12d3-a456-426614174006"
+                    permitId: "723e4567-e89b-12d3-a456-426614174008"
+                    busId: "923e4567-e89b-12d3-a456-426614174010"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    status: "active"
+                    createdAt: "2025-07-12T12:23:00+05:30"
+                    updatedAt: "2025-07-12T12:23:00+05:30"
+                meta:
+                  createdCount: 2
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.create permission"
+      security:
+        - bearerAuth: []
+  /schedule-assignments/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a schedule assignment
+      description: Retrieve paginated audit logs for a specific schedule assignment.
+      operationId: getScheduleAssignmentAuditLogs
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule assignment ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the schedule assignment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T12:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                        permitId: "723e4567-e89b-12d3-a456-426614174007"
+                        busId: "923e4567-e89b-12d3-a456-426614174009"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule assignment not found"
+      security:
+        - bearerAuth: []

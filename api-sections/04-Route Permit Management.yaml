@@ -1,0 +1,976 @@
+components:
+
+    Permit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "723e4567-e89b-12d3-a456-426614174007"
+        routeGroupId:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        operatorId:
+          type: string
+          format: uuid
+          example: "823e4567-e89b-12d3-a456-426614174008"
+        busId:
+          type: string
+          format: uuid
+          example: "923e4567-e89b-12d3-a456-426614174009"
+        issueDate:
+          type: string
+          format: date
+          example: "2025-07-12"
+        expiryDate:
+          type: string
+          format: date
+          example: "2026-07-12"
+        status:
+          type: string
+          enum: [active, expired, pending, revoked]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - routeGroupId
+        - operatorId
+        - issueDate
+        - status
+    PermitBusChangeRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a23e4567-e89b-12d3-a456-426614174010"
+        permitId:
+          type: string
+          format: uuid
+          example: "723e4567-e89b-12d3-a456-426614174007"
+        busId:
+          type: string
+          format: uuid
+          example: "923e4567-e89b-12d3-a456-426614174009"
+        reason:
+          type: string
+          example: "Current bus under maintenance"
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          example: "pending"
+        comments:
+          type: string
+          example: "Approved by admin"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - permitId
+        - busId
+        - reason
+        - status
+
+paths:
+  /permits:
+    get:
+      summary: Retrieve all route permits
+      description: Retrieve a paginated, filtered, and sorted list of route permits.
+      operationId: getPermits
+      tags:
+        - Permits
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[routeGroupId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by route group ID
+        - name: filter[operatorId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by operator ID
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, pending, revoked]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [issueDate:asc, issueDate:desc, expiryDate:asc, expiryDate:desc]
+          description: Sort by field (e.g., issueDate:asc)
+      responses:
+        '200':
+          description: List of route permits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permit'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "723e4567-e89b-12d3-a456-426614174007"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                    operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                    busId: "923e4567-e89b-12d3-a456-426614174009"
+                    issueDate: "2025-07-12"
+                    expiryDate: "2026-07-12"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new route permit
+      description: Create a new route permit.
+      operationId: createPermit
+      tags:
+        - Permits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeGroupId:
+                  type: string
+                  format: uuid
+                  example: "223e4567-e89b-12d3-a456-426614174001"
+                operatorId:
+                  type: string
+                  format: uuid
+                  example: "823e4567-e89b-12d3-a456-426614174008"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                issueDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                expiryDate:
+                  type: string
+                  format: date
+                  example: "2026-07-12"
+                status:
+                  type: string
+                  enum: [active, pending]
+                  example: "active"
+              required:
+                - routeGroupId
+                - operatorId
+                - issueDate
+                - status
+            example:
+              routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+              operatorId: "823e4567-e89b-12d3-a456-426614174008"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              issueDate: "2025-07-12"
+              expiryDate: "2026-07-12"
+              status: "active"
+      responses:
+        '201':
+          description: Route permit created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Permit'
+              example:
+                data:
+                  id: "723e4567-e89b-12d3-a456-426614174007"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  issueDate: "2025-07-12"
+                  expiryDate: "2026-07-12"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Route group ID is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permits.create permission"
+      security:
+        - bearerAuth: []
+  /permits/{id}:
+    get:
+      summary: Retrieve a specific route permit
+      description: Retrieve details of a specific route permit, including associated bus and operator.
+      operationId: getPermit
+      tags:
+        - Permits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit ID
+      responses:
+        '200':
+          description: Route permit details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Permit'
+              example:
+                data:
+                  id: "723e4567-e89b-12d3-a456-426614174007"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  issueDate: "2025-07-12"
+                  expiryDate: "2026-07-12"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Permit not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a route permit
+      description: Update an existing route permit.
+      operationId: updatePermit
+      tags:
+        - Permits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeGroupId:
+                  type: string
+                  format: uuid
+                  example: "223e4567-e89b-12d3-a456-426614174001"
+                operatorId:
+                  type: string
+                  format: uuid
+                  example: "823e4567-e89b-12d3-a456-426614174008"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                issueDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                expiryDate:
+                  type: string
+                  format: date
+                  example: "2026-07-12"
+                status:
+                  type: string
+                  enum: [active, expired, pending, revoked]
+                  example: "active"
+              required:
+                - routeGroupId
+                - operatorId
+                - issueDate
+                - status
+            example:
+              routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+              operatorId: "823e4567-e89b-12d3-a456-426614174008"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              issueDate: "2025-07-12"
+              expiryDate: "2026-07-12"
+              status: "active"
+      responses:
+        '200':
+          description: Route permit updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Permit'
+              example:
+                data:
+                  id: "723e4567-e89b-12d3-a456-426614174007"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  issueDate: "2025-07-12"
+                  expiryDate: "2026-07-12"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permits.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a route permit
+      description: Delete a route permit, with reference check for assignments.
+      operationId: deletePermit
+      tags:
+        - Permits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit ID
+      responses:
+        '200':
+          description: Route permit deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Permit deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permits.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete permit with active assignments"
+      security:
+        - bearerAuth: []
+  /permits/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a route permit
+      description: Retrieve paginated audit logs for a specific route permit.
+      operationId: getPermitAuditLogs
+      tags:
+        - Permits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the route permit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                        operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permits.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Permit not found"
+      security:
+        - bearerAuth: []
+  /permit-bus-change-requests:
+    get:
+      summary: Retrieve all permit-bus change requests
+      description: Retrieve a paginated, filtered, and sorted list of permit-bus change requests.
+      operationId: getPermitBusChangeRequests
+      tags:
+        - Permit Bus Change Requests
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[permitId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by permit ID
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+          description: Filter by status
+      responses:
+        '200':
+          description: List of permit-bus change requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermitBusChangeRequest'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "a23e4567-e89b-12d3-a456-426614174010"
+                    permitId: "723e4567-e89b-12d3-a456-426614174007"
+                    busId: "923e4567-e89b-12d3-a456-426614174009"
+                    reason: "Current bus under maintenance"
+                    status: "pending"
+                    comments: null
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a permit-bus change request
+      description: Create a new permit-bus change request.
+      operationId: createPermitBusChangeRequest
+      tags:
+        - Permit Bus Change Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                permitId:
+                  type: string
+                  format: uuid
+                  example: "723e4567-e89b-12d3-a456-426614174007"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                reason:
+                  type: string
+                  example: "Current bus under maintenance"
+              required:
+                - permitId
+                - busId
+                - reason
+            example:
+              permitId: "723e4567-e89b-12d3-a456-426614174007"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              reason: "Current bus under maintenance"
+      responses:
+        '201':
+          description: Permit-bus change request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermitBusChangeRequest'
+              example:
+                data:
+                  id: "a23e4567-e89b-12d3-a456-426614174010"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  reason: "Current bus under maintenance"
+                  status: "pending"
+                  comments: null
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Permit ID is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permit-bus-change-requests.create permission"
+      security:
+        - bearerAuth: []
+  /permit-bus-change-requests/{id}:
+    get:
+      summary: Retrieve a specific permit-bus change request
+      description: Retrieve details of a specific permit-bus change request.
+      operationId: getPermitBusChangeRequest
+      tags:
+        - Permit Bus Change Requests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit-bus change request ID
+      responses:
+        '200':
+          description: Permit-bus change request details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermitBusChangeRequest'
+              example:
+                data:
+                  id: "a23e4567-e89b-12d3-a456-426614174010"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  reason: "Current bus under maintenance"
+                  status: "pending"
+                  comments: null
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Permit-bus change request not found"
+      security:
+        - bearerAuth: []
+  /permit-bus-change-requests/{id}/approve:
+    post:
+      summary: Approve a permit-bus change request
+      description: Approve a permit-bus change request and update the permit with the new bus.
+      operationId: approvePermitBusChangeRequest
+      tags:
+        - Permit Bus Change Requests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit-bus change request ID
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                  example: "Approved by admin"
+            example:
+              comments: "Approved by admin"
+      responses:
+        '200':
+          description: Permit-bus change request approved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermitBusChangeRequest'
+              example:
+                data:
+                  id: "a23e4567-e89b-12d3-a456-426614174010"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  reason: "Current bus under maintenance"
+                  status: "approved"
+                  comments: "Approved by admin"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permit-bus-change-requests.approve permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /permit-bus-change-requests/{id}/reject:
+    post:
+      summary: Reject a permit-bus change request
+      description: Reject a permit-bus change request.
+      operationId: rejectPermitBusChangeRequest
+      tags:
+        - Permit Bus Change Requests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit-bus change request ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                  example: "Request rejected due to invalid bus"
+              required:
+                - comments
+            example:
+              comments: "Request rejected due to invalid bus"
+      responses:
+        '200':
+          description: Permit-bus change request rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermitBusChangeRequest'
+              example:
+                data:
+                  id: "a23e4567-e89b-12d3-a456-426614174010"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  reason: "Current bus under maintenance"
+                  status: "rejected"
+                  comments: "Request rejected due to invalid bus"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Comments are required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permit-bus-change-requests.reject permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []

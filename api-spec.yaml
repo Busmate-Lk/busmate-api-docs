@@ -1,0 +1,4931 @@
+openapi: 3.0.3
+info:
+  title: NTC Planning Section Official Portal API
+  description: API for managing routes, schedules, stops, permits, operators, buses, and dashboard metrics for the NTC (Sri Lanka) Planning Section.
+  version: 1.0.0
+  contact:
+    name: NTC Support
+    email: support@ntc.lk
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: /api/v1
+    description: Main API server
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                example: "INVALID_INPUT"
+              message:
+                type: string
+                example: "Invalid input provided"
+      required:
+        - errors
+    Meta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 100
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 20
+      required:
+        - total
+        - page
+        - limit
+    # Route management section components 
+    Route:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "Colombo - Kandy"
+        routeGroupId:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - name
+        - routeGroupId
+        - status
+    RouteGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        name:
+          type: string
+          example: "Colombo Region"
+        description:
+          type: string
+          example: "Routes in the Colombo area"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        routes:
+          type: array
+          items:
+            type: object
+            properties:
+              routeId:
+                type: string
+                format: uuid
+                example: "123e4567-e89b-12d3-a456-426614174000"
+              order:
+                type: integer
+                example: 1
+          example:
+            - routeId: "123e4567-e89b-12d3-a456-426614174000"
+              order: 1
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - name
+        - status
+    # Schedule management section components
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "523e4567-e89b-12d3-a456-426614174005"
+        routeGroupId:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        startDate:
+          type: string
+          format: date
+          example: "2025-07-12"
+        endDate:
+          type: string
+          format: date
+          example: "2025-12-31"
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly]
+          example: "daily"
+        times:
+          type: array
+          items:
+            type: string
+            format: time
+            example: "08:00:00+05:30"
+          example:
+            - "08:00:00+05:30"
+            - "12:00:00+05:30"
+        status:
+          type: string
+          enum: [active, expired, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - routeGroupId
+        - startDate
+        - frequency
+        - times
+        - status
+    # Stop directory section components
+    Stop:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "623e4567-e89b-12d3-a456-426614174006"
+        name:
+          type: string
+          example: "Fort Bus Stop"
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+              format: float
+              example: 6.9271
+            lng:
+              type: number
+              format: float
+              example: 79.8612
+          required:
+            - lat
+            - lng
+        address:
+          type: string
+          example: "Colombo Fort, Colombo 01"
+        description:
+          type: string
+          example: "Main bus stop in Colombo Fort area"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - name
+        - location
+        - address
+        - status
+    # Permit management section components
+    Permit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "723e4567-e89b-12d3-a456-426614174007"
+        routeGroupId:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        operatorId:
+          type: string
+          format: uuid
+          example: "823e4567-e89b-12d3-a456-426614174008"
+        busId:
+          type: string
+          format: uuid
+          example: "923e4567-e89b-12d3-a456-426614174009"
+        issueDate:
+          type: string
+          format: date
+          example: "2025-07-12"
+        expiryDate:
+          type: string
+          format: date
+          example: "2026-07-12"
+        status:
+          type: string
+          enum: [active, expired, pending, revoked]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - routeGroupId
+        - operatorId
+        - issueDate
+        - status
+    PermitBusChangeRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a23e4567-e89b-12d3-a456-426614174010"
+        permitId:
+          type: string
+          format: uuid
+          example: "723e4567-e89b-12d3-a456-426614174007"
+        busId:
+          type: string
+          format: uuid
+          example: "923e4567-e89b-12d3-a456-426614174009"
+        reason:
+          type: string
+          example: "Current bus under maintenance"
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          example: "pending"
+        comments:
+          type: string
+          example: "Approved by admin"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - permitId
+        - busId
+        - reason
+        - status
+    # Operator management section components
+    Operator:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "823e4567-e89b-12d3-a456-426614174008"
+        name:
+          type: string
+          example: "Colombo Transport Co."
+        contact:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+              example: "contact@colombotransport.lk"
+            phone:
+              type: string
+              example: "+94-11-2345678"
+          required:
+            - email
+            - phone
+        address:
+          type: string
+          example: "123 Main Street, Colombo 03"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - name
+        - contact
+        - address
+        - status
+    # Bus management section components
+    Bus:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "923e4567-e89b-12d3-a456-426614174009"
+        operatorId:
+          type: string
+          format: uuid
+          example: "823e4567-e89b-12d3-a456-426614174008"
+        registrationNumber:
+          type: string
+          example: "WP-NA-1234"
+        model:
+          type: string
+          example: "Ashok Leyland Viking"
+        capacity:
+          type: integer
+          example: 50
+        status:
+          type: string
+          enum: [active, inactive, under_maintenance]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T12:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T12:23:00+05:30"
+      required:
+        - id
+        - operatorId
+        - registrationNumber
+        - model
+        - capacity
+        - status
+    # ScheduleAssignment section components
+    ScheduleAssignment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "b23e4567-e89b-12d3-a456-426614174011"
+        scheduleId:
+          type: string
+          format: uuid
+          example: "523e4567-e89b-12d3-a456-426614174005"
+        permitId:
+          type: string
+          format: uuid
+          example: "723e4567-e89b-12d3-a456-426614174007"
+        busId:
+          type: string
+          format: uuid
+          example: "923e4567-e89b-12d3-a456-426614174009"
+        startDate:
+          type: string
+          format: date
+          example: "2025-07-12"
+        endDate:
+          type: string
+          format: date
+          example: "2025-12-31"
+        status:
+          type: string
+          enum: [active, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T12:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T12:23:00+05:30"
+      required:
+        - id
+        - scheduleId
+        - permitId
+        - busId
+        - startDate
+        - status
+    # AuditLog components
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "323e4567-e89b-12d3-a456-426614174002"
+        action:
+          type: string
+          enum: [create, update, delete]
+          example: "create"
+        userId:
+          type: string
+          format: uuid
+          example: "423e4567-e89b-12d3-a456-426614174003"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        details:
+          type: object
+          example:
+            previous: {}
+            current: {}
+      required:
+        - id
+        - action
+        - userId
+        - timestamp
+paths:
+  # Route management section paths
+  /route-groups:
+    get:
+      summary: Retrieve all route groups
+      description: Retrieve a paginated, filtered, and sorted list of route groups with their child routes.
+      operationId: getRouteGroups
+      tags:
+        - Route Groups
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[name]
+          in: query
+          schema:
+            type: string
+          description: Filter by route group name (partial match)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name:asc, name:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., name:asc)
+      responses:
+        '200':
+          description: List of route groups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RouteGroup'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "223e4567-e89b-12d3-a456-426614174001"
+                    name: "Colombo Region"
+                    description: "Routes in the Colombo area"
+                    status: "active"
+                    routes:
+                      - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                        order: 1
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new route group
+      description: Create a new route group with optional child routes.
+      operationId: createRouteGroup
+      tags:
+        - Route Groups
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Colombo Region"
+                description:
+                  type: string
+                  example: "Routes in the Colombo area"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+                routes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      routeId:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      order:
+                        type: integer
+                        example: 1
+              required:
+                - name
+                - status
+            example:
+              name: "Colombo Region"
+              description: "Routes in the Colombo area"
+              status: "active"
+              routes:
+                - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                  order: 1
+      responses:
+        '201':
+          description: Route group created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RouteGroup'
+              example:
+                data:
+                  id: "223e4567-e89b-12d3-a456-426614174001"
+                  name: "Colombo Region"
+                  description: "Routes in the Colombo area"
+                  status: "active"
+                  routes:
+                    - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                      order: 1
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Name is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires route-groups.create permission"
+      security:
+        - bearerAuth: []
+  /route-groups/{id}:
+    get:
+      summary: Retrieve a specific route group
+      description: Retrieve details of a specific route group, including its child routes.
+      operationId: getRouteGroup
+      tags:
+        - Route Groups
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route group ID
+      responses:
+        '200':
+          description: Route group details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RouteGroup'
+              example:
+                data:
+                  id: "223e4567-e89b-12d3-a456-426614174001"
+                  name: "Colombo Region"
+                  description: "Routes in the Colombo area"
+                  status: "active"
+                  routes:
+                    - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                      order: 1
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Route group not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a route group
+      description: Update a route group and its child routes.
+      operationId: updateRouteGroup
+      tags:
+        - Route Groups
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route group ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Colombo Region"
+                description:
+                  type: string
+                  example: "Updated routes in the Colombo area"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+                routes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      routeId:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      order:
+                        type: integer
+                        example: 1
+              required:
+                - name
+                - status
+            example:
+              name: "Colombo Region"
+              description: "Updated routes in the Colombo area"
+              status: "active"
+              routes:
+                - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                  order: 1
+      responses:
+        '200':
+          description: Route group updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RouteGroup'
+              example:
+                data:
+                  id: "223e4567-e89b-12d3-a456-426614174001"
+                  name: "Colombo Region"
+                  description: "Updated routes in the Colombo area"
+                  status: "active"
+                  routes:
+                    - routeId: "123e4567-e89b-12d3-a456-426614174000"
+                      order: 1
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires route-groups.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a route group
+      description: Delete a route group and its child routes, with reference check for active schedules or permits.
+      operationId: deleteRouteGroup
+      tags:
+        - Route Groups
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route group ID
+      responses:
+        '200':
+          description: Route group deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Route group deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires route-groups.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete route group with active schedules or permits"
+      security:
+        - bearerAuth: []
+  /route-groups/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a route group
+      description: Retrieve paginated audit logs for a specific route group.
+      operationId: getRouteGroupAuditLogs
+      tags:
+        - Route Groups
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route group ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the route group
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        name: "Colombo Region"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires route-groups.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /routes:
+    get:
+      summary: Retrieve all routes
+      description: Retrieve a paginated, filtered, and sorted list of routes.
+      operationId: getRoutes
+      tags:
+        - Routes
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[name]
+          in: query
+          schema:
+            type: string
+          description: Filter by route name (partial match)
+        - name: filter[routeGroupId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by route group ID
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name:asc, name:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., name:asc)
+      responses:
+        '200':
+          description: List of routes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Route'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "123e4567-e89b-12d3-a456-426614174000"
+                    name: "Colombo - Kandy"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /routes/{id}:
+    get:
+      summary: Retrieve a specific route
+      description: Retrieve details of a specific route.
+      operationId: getRoute
+      tags:
+        - Routes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Route ID
+      responses:
+        '200':
+          description: Route details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Route'
+              example:
+                data:
+                  id: "123e4567-e89b-12d3-a456-426614174000"
+                  name: "Colombo - Kandy"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Route not found"
+      security:
+        - bearerAuth: []
+  # Schedule management section components
+  /schedules:
+    get:
+      summary: Retrieve all schedules
+      description: Retrieve a paginated, filtered, and sorted list of schedules.
+      operationId: getSchedules
+      tags:
+        - Schedules
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[routeGroupId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by route group ID
+        - name: filter[startDate]
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter by start date (e.g., 2025-07-12)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [startDate:asc, startDate:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., startDate:asc)
+      responses:
+        '200':
+          description: List of schedules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Schedule'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "523e4567-e89b-12d3-a456-426614174005"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    frequency: "daily"
+                    times:
+                      - "08:00:00+05:30"
+                      - "12:00:00+05:30"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new schedule
+      description: Create a new schedule.
+      operationId: createSchedule
+      tags:
+        - Schedules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeGroupId:
+                  type: string
+                  format: uuid
+                  example: "223e4567-e89b-12d3-a456-426614174001"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                frequency:
+                  type: string
+                  enum: [daily, weekly, monthly]
+                  example: "daily"
+                times:
+                  type: array
+                  items:
+                    type: string
+                    format: time
+                    example: "08:00:00+05:30"
+                  example:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - routeGroupId
+                - startDate
+                - frequency
+                - times
+                - status
+            example:
+              routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+              startDate: "2025-07-12"
+              endDate: "2025-12-31"
+              frequency: "daily"
+              times:
+                - "08:00:00+05:30"
+                - "12:00:00+05:30"
+              status: "active"
+      responses:
+        '201':
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+              example:
+                data:
+                  id: "523e4567-e89b-12d3-a456-426614174005"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  frequency: "daily"
+                  times:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Route group ID is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.create permission"
+      security:
+        - bearerAuth: []
+  /schedules/{id}:
+    get:
+      summary: Retrieve a specific schedule
+      description: Retrieve details of a specific schedule, including associated assignments.
+      operationId: getSchedule
+      tags:
+        - Schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule ID
+      responses:
+        '200':
+          description: Schedule details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+              example:
+                data:
+                  id: "523e4567-e89b-12d3-a456-426614174005"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  frequency: "daily"
+                  times:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a schedule
+      description: Update an existing schedule.
+      operationId: updateSchedule
+      tags:
+        - Schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeGroupId:
+                  type: string
+                  format: uuid
+                  example: "223e4567-e89b-12d3-a456-426614174001"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                frequency:
+                  type: string
+                  enum: [daily, weekly, monthly]
+                  example: "daily"
+                times:
+                  type: array
+                  items:
+                    type: string
+                    format: time
+                    example: "08:00:00+05:30"
+                  example:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - routeGroupId
+                - startDate
+                - frequency
+                - times
+                - status
+            example:
+              routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+              startDate: "2025-07-12"
+              endDate: "2025-12-31"
+              frequency: "daily"
+              times:
+                - "08:00:00+05:30"
+                - "12:00:00+05:30"
+              status: "active"
+      responses:
+        '200':
+          description: Schedule updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+              example:
+                data:
+                  id: "523e4567-e89b-12d3-a456-426614174005"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  frequency: "daily"
+                  times:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a schedule
+      description: Delete a schedule, with reference check for assignments.
+      operationId: deleteSchedule
+      tags:
+        - Schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule ID
+      responses:
+        '200':
+          description: Schedule deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Schedule deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete schedule with active assignments"
+      security:
+        - bearerAuth: []
+  /schedules/bulk:
+    post:
+      summary: Create multiple schedules
+      description: Create multiple schedules in a single request.
+      operationId: createBulkSchedules
+      tags:
+        - Schedules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  routeGroupId:
+                    type: string
+                    format: uuid
+                    example: "223e4567-e89b-12d3-a456-426614174001"
+                  startDate:
+                    type: string
+                    format: date
+                    example: "2025-07-12"
+                  endDate:
+                    type: string
+                    format: date
+                    example: "2025-12-31"
+                  frequency:
+                    type: string
+                    enum: [daily, weekly, monthly]
+                    example: "daily"
+                  times:
+                    type: array
+                    items:
+                      type: string
+                      format: time
+                      example: "08:00:00+05:30"
+                    example:
+                      - "08:00:00+05:30"
+                      - "12:00:00+05:30"
+                  status:
+                    type: string
+                    enum: [active, inactive]
+                    example: "active"
+                required:
+                  - routeGroupId
+                  - startDate
+                  - frequency
+                  - times
+                  - status
+            example:
+              - routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                startDate: "2025-07-12"
+                endDate: "2025-12-31"
+                frequency: "daily"
+                times:
+                  - "08:00:00+05:30"
+                  - "12:00:00+05:30"
+                status: "active"
+              - routeGroupId: "223e4567-e89b-12d3-a456-426614174002"
+                startDate: "2025-07-12"
+                endDate: "2025-12-31"
+                frequency: "weekly"
+                times:
+                  - "09:00:00+05:30"
+                status: "active"
+      responses:
+        '201':
+          description: Schedules created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Schedule'
+                  meta:
+                    type: object
+                    properties:
+                      createdCount:
+                        type: integer
+                        example: 2
+              example:
+                data:
+                  - id: "523e4567-e89b-12d3-a456-426614174005"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    frequency: "daily"
+                    times:
+                      - "08:00:00+05:30"
+                      - "12:00:00+05:30"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                  - id: "523e4567-e89b-12d3-a456-426614174006"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174002"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    frequency: "weekly"
+                    times:
+                      - "09:00:00+05:30"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  createdCount: 2
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.create permission"
+      security:
+        - bearerAuth: []
+  /schedules/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a schedule
+      description: Retrieve paginated audit logs for a specific schedule.
+      operationId: getScheduleAuditLogs
+      tags:
+        - Schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the schedule
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                        startDate: "2025-07-12"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule not found"
+      security:
+        - bearerAuth: []
+  # Stop directory section paths
+  /stops:
+    get:
+      summary: Retrieve all stops
+      description: Retrieve a paginated, filtered, and sorted list of stops.
+      operationId: getStops
+      tags:
+        - Stops
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[name]
+        - name: filter[location]
+          in: query
+          schema:
+            type: string
+          description: Filter by location (e.g., city)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name:asc, name:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., name:asc)
+      responses:
+        '200':
+          description: List of stops
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stop'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "623e4567-e89b-12d3-a456-426614174006"
+                    name: "Fort Bus Stop"
+                    location:
+                      lat: 6.9271
+                      lng: 79.8612
+                    address: "Colombo Fort, Colombo 01"
+                    description: "Main bus stop in Colombo Fort area"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new stop
+      description: Create a new stop.
+      operationId: createStop
+      tags:
+        - Stops
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Fort Bus Stop"
+                location:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                      format: float
+                      example: 6.9271
+                    lng:
+                      type: number
+                      format: float
+                      example: 79.8612
+                  required:
+                    - lat
+                    - lng
+                address:
+                  type: string
+                  example: "Colombo Fort, Colombo 01"
+                description:
+                  type: string
+                  example: "Main bus stop in Colombo Fort area"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - name
+                - location
+                - address
+                - status
+            example:
+              name: "Fort Bus Stop"
+              location:
+                lat: 6.9271
+                lng: 79.8612
+              address: "Colombo Fort, Colombo 01"
+              description: "Main bus stop in Colombo Fort area"
+              status: "active"
+      responses:
+        '201':
+          description: Stop created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Stop'
+              example:
+                data:
+                  id: "623e4567-e89b-12d3-a456-426614174006"
+                  name: "Fort Bus Stop"
+                  location:
+                    lat: 6.9271
+                    lng: 79.8612
+                  address: "Colombo Fort, Colombo 01"
+                  description: "Main bus stop in Colombo Fort area"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Name is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires stops.create permission"
+      security:
+        - bearerAuth: []
+  /stops/{id}:
+    get:
+      summary: Retrieve a specific stop
+      description: Retrieve details of a specific stop, including associated routes.
+      operationId: getStop
+      tags:
+        - Stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stop ID
+      responses:
+        '200':
+          description: Stop details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Stop'
+              example:
+                data:
+                  id: "623e4567-e89b-12d3-a456-426614174006"
+                  name: "Fort Bus Stop"
+                  location:
+                    lat: 6.9271
+                    lng: 79.8612
+                  address: "Colombo Fort, Colombo 01"
+                  description: "Main bus stop in Colombo Fort area"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Stop not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a stop
+      description: Update an existing stop.
+      operationId: updateStop
+      tags:
+        - Stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stop ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Fort Bus Stop"
+                location:
+                  type: object
+                  properties:
+                    lat:
+                      type: number
+                      format: float
+                      example: 6.9271
+                    lng:
+                      type: number
+                      format: float
+                      example: 79.8612
+                  required:
+                    - lat
+                    - lng
+                address:
+                  type: string
+                  example: "Colombo Fort, Colombo 01"
+                description:
+                  type: string
+                  example: "Updated main bus stop in Colombo Fort area"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - name
+                - location
+                - address
+                - status
+            example:
+              name: "Fort Bus Stop"
+              location:
+                lat: 6.9271
+                lng: 79.8612
+              address: "Colombo Fort, Colombo 01"
+              description: "Updated main bus stop in Colombo Fort area"
+              status: "active"
+      responses:
+        '200':
+          description: Stop updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Stop'
+              example:
+                data:
+                  id: "623e4567-e89b-12d3-a456-426614174006"
+                  name: "Fort Bus Stop"
+                  location:
+                    lat: 6.9271
+                    lng: 79.8612
+                  address: "Colombo Fort, Colombo 01"
+                  description: "Updated main bus stop in Colombo Fort area"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires stops.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a stop
+      description: Delete a stop, with reference check for routes or schedules.
+      operationId: deleteStop
+      tags:
+        - Stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stop ID
+      responses:
+        '200':
+          description: Stop deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Stop deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires stops.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete stop linked to routes or schedules"
+      security:
+        - bearerAuth: []
+  /stops/search:
+    get:
+      summary: Search stops
+      description: Search stops by name or location with fuzzy matching.
+      operationId: searchStops
+      tags:
+        - Stops
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search term for name or address
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+      responses:
+        '200':
+          description: List of matching stops
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stop'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "623e4567-e89b-12d3-a456-426614174006"
+                    name: "Fort Bus Stop"
+                    location:
+                      lat: 6.9271
+                      lng: 79.8612
+                    address: "Colombo Fort, Colombo 01"
+                    description: "Main bus stop in Colombo Fort area"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '400':
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Query parameter is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /stops/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a stop
+      description: Retrieve paginated audit logs for a specific stop.
+      operationId: getStopAuditLogs
+      tags:
+        - Stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Stop ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the stop
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        name: "Fort Bus Stop"
+                        location:
+                          lat: 6.9271
+                          lng: 79.8612
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires stops.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Stop not found"
+      security:
+        - bearerAuth: []
+  # Permit management section paths
+  /permits:
+    get:
+      summary: Retrieve all route permits
+      description: Retrieve a paginated, filtered, and sorted list of route permits.
+      operationId: getPermits
+      tags:
+        - Permits
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[routeGroupId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by route group ID
+        - name: filter[operatorId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by operator ID
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, pending, revoked]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [issueDate:asc, issueDate:desc, expiryDate:asc, expiryDate:desc]
+          description: Sort by field (e.g., issueDate:asc)
+      responses:
+        '200':
+          description: List of route permits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permit'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "723e4567-e89b-12d3-a456-426614174007"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                    operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                    busId: "923e4567-e89b-12d3-a456-426614174009"
+                    issueDate: "2025-07-12"
+                    expiryDate: "2026-07-12"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new route permit
+      description: Create a new route permit.
+      operationId: createPermit
+      tags:
+        - Permits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeGroupId:
+                  type: string
+                  format: uuid
+                  example: "223e4567-e89b-12d3-a456-426614174001"
+                operatorId:
+                  type: string
+                  format: uuid
+                  example: "823e4567-e89b-12d3-a456-426614174008"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                issueDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                expiryDate:
+                  type: string
+                  format: date
+                  example: "2026-07-12"
+                status:
+                  type: string
+                  enum: [active, pending]
+                  example: "active"
+              required:
+                - routeGroupId
+                - operatorId
+                - issueDate
+                - status
+            example:
+              routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+              operatorId: "823e4567-e89b-12d3-a456-426614174008"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              issueDate: "2025-07-12"
+              expiryDate: "2026-07-12"
+              status: "active"
+      responses:
+        '201':
+          description: Route permit created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Permit'
+              example:
+                data:
+                  id: "723e4567-e89b-12d3-a456-426614174007"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  issueDate: "2025-07-12"
+                  expiryDate: "2026-07-12"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Route group ID is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permits.create permission"
+      security:
+        - bearerAuth: []
+  /permits/{id}:
+    get:
+      summary: Retrieve a specific route permit
+      description: Retrieve details of a specific route permit, including associated bus and operator.
+      operationId: getPermit
+      tags:
+        - Permits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit ID
+      responses:
+        '200':
+          description: Route permit details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Permit'
+              example:
+                data:
+                  id: "723e4567-e89b-12d3-a456-426614174007"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  issueDate: "2025-07-12"
+                  expiryDate: "2026-07-12"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Permit not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a route permit
+      description: Update an existing route permit.
+      operationId: updatePermit
+      tags:
+        - Permits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeGroupId:
+                  type: string
+                  format: uuid
+                  example: "223e4567-e89b-12d3-a456-426614174001"
+                operatorId:
+                  type: string
+                  format: uuid
+                  example: "823e4567-e89b-12d3-a456-426614174008"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                issueDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                expiryDate:
+                  type: string
+                  format: date
+                  example: "2026-07-12"
+                status:
+                  type: string
+                  enum: [active, expired, pending, revoked]
+                  example: "active"
+              required:
+                - routeGroupId
+                - operatorId
+                - issueDate
+                - status
+            example:
+              routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+              operatorId: "823e4567-e89b-12d3-a456-426614174008"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              issueDate: "2025-07-12"
+              expiryDate: "2026-07-12"
+              status: "active"
+      responses:
+        '200':
+          description: Route permit updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Permit'
+              example:
+                data:
+                  id: "723e4567-e89b-12d3-a456-426614174007"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  issueDate: "2025-07-12"
+                  expiryDate: "2026-07-12"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permits.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a route permit
+      description: Delete a route permit, with reference check for assignments.
+      operationId: deletePermit
+      tags:
+        - Permits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit ID
+      responses:
+        '200':
+          description: Route permit deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Permit deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permits.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete permit with active assignments"
+      security:
+        - bearerAuth: []
+  /permits/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a route permit
+      description: Retrieve paginated audit logs for a specific route permit.
+      operationId: getPermitAuditLogs
+      tags:
+        - Permits
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the route permit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                        operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permits.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Permit not found"
+      security:
+        - bearerAuth: []
+  /permit-bus-change-requests:
+    get:
+      summary: Retrieve all permit-bus change requests
+      description: Retrieve a paginated, filtered, and sorted list of permit-bus change requests.
+      operationId: getPermitBusChangeRequests
+      tags:
+        - Permit Bus Change Requests
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[permitId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by permit ID
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+          description: Filter by status
+      responses:
+        '200':
+          description: List of permit-bus change requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PermitBusChangeRequest'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "a23e4567-e89b-12d3-a456-426614174010"
+                    permitId: "723e4567-e89b-12d3-a456-426614174007"
+                    busId: "923e4567-e89b-12d3-a456-426614174009"
+                    reason: "Current bus under maintenance"
+                    status: "pending"
+                    comments: null
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a permit-bus change request
+      description: Create a new permit-bus change request.
+      operationId: createPermitBusChangeRequest
+      tags:
+        - Permit Bus Change Requests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                permitId:
+                  type: string
+                  format: uuid
+                  example: "723e4567-e89b-12d3-a456-426614174007"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                reason:
+                  type: string
+                  example: "Current bus under maintenance"
+              required:
+                - permitId
+                - busId
+                - reason
+            example:
+              permitId: "723e4567-e89b-12d3-a456-426614174007"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              reason: "Current bus under maintenance"
+      responses:
+        '201':
+          description: Permit-bus change request created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermitBusChangeRequest'
+              example:
+                data:
+                  id: "a23e4567-e89b-12d3-a456-426614174010"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  reason: "Current bus under maintenance"
+                  status: "pending"
+                  comments: null
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Permit ID is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permit-bus-change-requests.create permission"
+      security:
+        - bearerAuth: []
+  /permit-bus-change-requests/{id}:
+    get:
+      summary: Retrieve a specific permit-bus change request
+      description: Retrieve details of a specific permit-bus change request.
+      operationId: getPermitBusChangeRequest
+      tags:
+        - Permit Bus Change Requests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit-bus change request ID
+      responses:
+        '200':
+          description: Permit-bus change request details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermitBusChangeRequest'
+              example:
+                data:
+                  id: "a23e4567-e89b-12d3-a456-426614174010"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  reason: "Current bus under maintenance"
+                  status: "pending"
+                  comments: null
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Permit-bus change request not found"
+      security:
+        - bearerAuth: []
+  /permit-bus-change-requests/{id}/approve:
+    post:
+      summary: Approve a permit-bus change request
+      description: Approve a permit-bus change request and update the permit with the new bus.
+      operationId: approvePermitBusChangeRequest
+      tags:
+        - Permit Bus Change Requests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit-bus change request ID
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                  example: "Approved by admin"
+            example:
+              comments: "Approved by admin"
+      responses:
+        '200':
+          description: Permit-bus change request approved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermitBusChangeRequest'
+              example:
+                data:
+                  id: "a23e4567-e89b-12d3-a456-426614174010"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  reason: "Current bus under maintenance"
+                  status: "approved"
+                  comments: "Approved by admin"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permit-bus-change-requests.approve permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  /permit-bus-change-requests/{id}/reject:
+    post:
+      summary: Reject a permit-bus change request
+      description: Reject a permit-bus change request.
+      operationId: rejectPermitBusChangeRequest
+      tags:
+        - Permit Bus Change Requests
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Permit-bus change request ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comments:
+                  type: string
+                  example: "Request rejected due to invalid bus"
+              required:
+                - comments
+            example:
+              comments: "Request rejected due to invalid bus"
+      responses:
+        '200':
+          description: Permit-bus change request rejected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PermitBusChangeRequest'
+              example:
+                data:
+                  id: "a23e4567-e89b-12d3-a456-426614174010"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  reason: "Current bus under maintenance"
+                  status: "rejected"
+                  comments: "Request rejected due to invalid bus"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Comments are required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires permit-bus-change-requests.reject permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+  # Operator management section paths
+  /operators:
+    get:
+      summary: Retrieve all operators
+      description: Retrieve a paginated, filtered, and sorted list of operators.
+      operationId: getOperators
+      tags:
+        - Operators
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[name]
+          in: query
+          schema:
+            type: string
+          description: Filter by operator name (partial match)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name:asc, name:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., name:asc)
+      responses:
+        '200':
+          description: List of operators
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Operator'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "823e4567-e89b-12d3-a456-426614174008"
+                    name: "Colombo Transport Co."
+                    contact:
+                      email: "contact@colombotransport.lk"
+                      phone: "+94-11-2345678"
+                    address: "123 Main Street, Colombo 03"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new operator
+      description: Create a new operator.
+      operationId: createOperator
+      tags:
+        - Operators
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Colombo Transport Co."
+                contact:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      example: "contact@colombotransport.lk"
+                    phone:
+                      type: string
+                      example: "+94-11-2345678"
+                  required:
+                    - email
+                    - phone
+                address:
+                  type: string
+                  example: "123 Main Street, Colombo 03"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - name
+                - contact
+                - address
+                - status
+            example:
+              name: "Colombo Transport Co."
+              contact:
+                email: "contact@colombotransport.lk"
+                phone: "+94-11-2345678"
+              address: "123 Main Street, Colombo 03"
+              status: "active"
+      responses:
+        '201':
+          description: Operator created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Operator'
+              example:
+                data:
+                  id: "823e4567-e89b-12d3-a456-426614174008"
+                  name: "Colombo Transport Co."
+                  contact:
+                    email: "contact@colombotransport.lk"
+                    phone: "+94-11-2345678"
+                  address: "123 Main Street, Colombo 03"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Name is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires operators.create permission"
+      security:
+        - bearerAuth: []
+  /operators/{id}:
+    get:
+      summary: Retrieve a specific operator
+      description: Retrieve details of a specific operator, including associated permits and buses.
+      operationId: getOperator
+      tags:
+        - Operators
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Operator ID
+      responses:
+        '200':
+          description: Operator details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Operator'
+              example:
+                data:
+                  id: "823e4567-e89b-12d3-a456-426614174008"
+                  name: "Colombo Transport Co."
+                  contact:
+                    email: "contact@colombotransport.lk"
+                    phone: "+94-11-2345678"
+                  address: "123 Main Street, Colombo 03"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Operator not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update an operator
+      description: Update an existing operator.
+      operationId: updateOperator
+      tags:
+        - Operators
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Operator ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Colombo Transport Co."
+                contact:
+                  type: object
+                  properties:
+                    email:
+                      type: string
+                      format: email
+                      example: "contact@colombotransport.lk"
+                    phone:
+                      type: string
+                      example: "+94-11-2345678"
+                  required:
+                    - email
+                    - phone
+                address:
+                  type: string
+                  example: "123 Main Street, Colombo 03"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - name
+                - contact
+                - address
+                - status
+            example:
+              name: "Colombo Transport Co."
+              contact:
+                email: "contact@colombotransport.lk"
+                phone: "+94-11-2345678"
+              address: "123 Main Street, Colombo 03"
+              status: "active"
+      responses:
+        '200':
+          description: Operator updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Operator'
+              example:
+                data:
+                  id: "823e4567-e89b-12d3-a456-426614174008"
+                  name: "Colombo Transport Co."
+                  contact:
+                    email: "contact@colombotransport.lk"
+                    phone: "+94-11-2345678"
+                  address: "123 Main Street, Colombo 03"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires operators.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete an operator
+      description: Delete an operator, with reference check for permits or assignments.
+      operationId: deleteOperator
+      tags:
+        - Operators
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Operator ID
+      responses:
+        '200':
+          description: Operator deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Operator deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires operators.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete operator with active permits or assignments"
+      security:
+        - bearerAuth: []
+  /operators/{id}/audit:
+    get:
+      summary: Retrieve audit logs for an operator
+      description: Retrieve paginated audit logs for a specific operator.
+      operationId: getOperatorAuditLogs
+      tags:
+        - Operators
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Operator ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the operator
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        name: "Colombo Transport Co."
+                        contact:
+                          email: "contact@colombotransport.lk"
+                          phone: "+94-11-2345678"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires operators.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Operator not found"
+      security:
+        - bearerAuth: []
+  # Bus management section paths
+  /buses:
+    get:
+      summary: Retrieve all buses
+      description: Retrieve a paginated, filtered, and sorted list of buses.
+      operationId: getBuses
+      tags:
+        - Buses
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[operatorId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by operator ID
+        - name: filter[registrationNumber]
+          in: query
+          schema:
+            type: string
+          description: Filter by registration number (partial match)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, under_maintenance]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [registrationNumber:asc, registrationNumber:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., registrationNumber:asc)
+      responses:
+        '200':
+          description: List of buses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bus'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "923e4567-e89b-12d3-a456-426614174009"
+                    operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                    registrationNumber: "WP-NA-1234"
+                    model: "Ashok Leyland Viking"
+                    capacity: 50
+                    status: "active"
+                    createdAt: "2025-07-12T12:23:00+05:30"
+                    updatedAt: "2025-07-12T12:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new bus
+      description: Create a new bus.
+      operationId: createBus
+      tags:
+        - Buses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operatorId:
+                  type: string
+                  format: uuid
+                  example: "823e4567-e89b-12d3-a456-426614174008"
+                registrationNumber:
+                  type: string
+                  example: "WP-NA-1234"
+                model:
+                  type: string
+                  example: "Ashok Leyland Viking"
+                capacity:
+                  type: integer
+                  example: 50
+                status:
+                  type: string
+                  enum: [active, inactive, under_maintenance]
+                  example: "active"
+              required:
+                - operatorId
+                - registrationNumber
+                - model
+                - capacity
+                - status
+            example:
+              operatorId: "823e4567-e89b-12d3-a456-426614174008"
+              registrationNumber: "WP-NA-1234"
+              model: "Ashok Leyland Viking"
+              capacity: 50
+              status: "active"
+      responses:
+        '201':
+          description: Bus created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Bus'
+              example:
+                data:
+                  id: "923e4567-e89b-12d3-a456-426614174009"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  registrationNumber: "WP-NA-1234"
+                  model: "Ashok Leyland Viking"
+                  capacity: 50
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Registration number is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires buses.create permission"
+      security:
+        - bearerAuth: []
+  /buses/{id}:
+    get:
+      summary: Retrieve a specific bus
+      description: Retrieve details of a specific bus, including associated operator and permits.
+      operationId: getBus
+      tags:
+        - Buses
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Bus ID
+      responses:
+        '200':
+          description: Bus details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Bus'
+              example:
+                data:
+                  id: "923e4567-e89b-12d3-a456-426614174009"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  registrationNumber: "WP-NA-1234"
+                  model: "Ashok Leyland Viking"
+                  capacity: 50
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Bus not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a bus
+      description: Update an existing bus.
+      operationId: updateBus
+      tags:
+        - Buses
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Bus ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operatorId:
+                  type: string
+                  format: uuid
+                  example: "823e4567-e89b-12d3-a456-426614174008"
+                registrationNumber:
+                  type: string
+                  example: "WP-NA-1234"
+                model:
+                  type: string
+                  example: "Ashok Leyland Viking"
+                capacity:
+                  type: integer
+                  example: 50
+                status:
+                  type: string
+                  enum: [active, inactive, under_maintenance]
+                  example: "active"
+              required:
+                - operatorId
+                - registrationNumber
+                - model
+                - capacity
+                - status
+            example:
+              operatorId: "823e4567-e89b-12d3-a456-426614174008"
+              registrationNumber: "WP-NA-1234"
+              model: "Ashok Leyland Viking"
+              capacity: 50
+              status: "active"
+      responses:
+        '200':
+          description: Bus updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Bus'
+              example:
+                data:
+                  id: "923e4567-e89b-12d3-a456-426614174009"
+                  operatorId: "823e4567-e89b-12d3-a456-426614174008"
+                  registrationNumber: "WP-NA-1234"
+                  model: "Ashok Leyland Viking"
+                  capacity: 50
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:30:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires buses.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a bus
+      description: Delete a bus, with reference check for permits or assignments.
+      operationId: deleteBus
+      tags:
+        - Buses
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Bus ID
+      responses:
+        '200':
+          description: Bus deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Bus deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires buses.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete bus with active permits or assignments"
+      security:
+        - bearerAuth: []
+  /buses/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a bus
+      description: Retrieve paginated audit logs for a specific bus.
+      operationId: getBusAuditLogs
+      tags:
+        - Buses
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Bus ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the bus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T12:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        registrationNumber: "WP-NA-1234"
+                        model: "Ashok Leyland Viking"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires buses.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Bus not found"
+      security:
+        - bearerAuth: []
+  # ScheduleAssignment section paths
+  /schedule-assignments:
+    get:
+      summary: Retrieve all schedule assignments
+      description: Retrieve a paginated, filtered, and sorted list of schedule assignments.
+      operationId: getScheduleAssignments
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[scheduleId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by schedule ID
+        - name: filter[permitId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by permit ID
+        - name: filter[busId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by bus ID
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [startDate:asc, startDate:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., startDate:asc)
+      responses:
+        '200':
+          description: List of schedule assignments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScheduleAssignment'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "b23e4567-e89b-12d3-a456-426614174011"
+                    scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                    permitId: "723e4567-e89b-12d3-a456-426614174007"
+                    busId: "923e4567-e89b-12d3-a456-426614174009"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    status: "active"
+                    createdAt: "2025-07-12T12:23:00+05:30"
+                    updatedAt: "2025-07-12T12:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new schedule assignment
+      description: Create a new schedule assignment.
+      operationId: createScheduleAssignment
+      tags:
+        - Schedule Assignments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduleId:
+                  type: string
+                  format: uuid
+                  example: "523e4567-e89b-12d3-a456-426614174005"
+                permitId:
+                  type: string
+                  format: uuid
+                  example: "723e4567-e89b-12d3-a456-426614174007"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - scheduleId
+                - permitId
+                - busId
+                - startDate
+                - status
+            example:
+              scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+              permitId: "723e4567-e89b-12d3-a456-426614174007"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              startDate: "2025-07-12"
+              endDate: "2025-12-31"
+              status: "active"
+      responses:
+        '201':
+          description: Schedule assignment created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScheduleAssignment'
+              example:
+                data:
+                  id: "b23e4567-e89b-12d3-a456-426614174011"
+                  scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Schedule ID is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.create permission"
+      security:
+        - bearerAuth: []
+  /schedule-assignments/{id}:
+    get:
+      summary: Retrieve a specific schedule assignment
+      description: Retrieve details of a specific schedule assignment, including associated schedule, permit, and bus.
+      operationId: getScheduleAssignment
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule assignment ID
+      responses:
+        '200':
+          description: Schedule assignment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScheduleAssignment'
+              example:
+                data:
+                  id: "b23e4567-e89b-12d3-a456-426614174011"
+                  scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule assignment not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a schedule assignment
+      description: Update an existing schedule assignment.
+      operationId: updateScheduleAssignment
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule assignment ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scheduleId:
+                  type: string
+                  format: uuid
+                  example: "523e4567-e89b-12d3-a456-426614174005"
+                permitId:
+                  type: string
+                  format: uuid
+                  example: "723e4567-e89b-12d3-a456-426614174007"
+                busId:
+                  type: string
+                  format: uuid
+                  example: "923e4567-e89b-12d3-a456-426614174009"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - scheduleId
+                - permitId
+                - busId
+                - startDate
+                - status
+            example:
+              scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+              permitId: "723e4567-e89b-12d3-a456-426614174007"
+              busId: "923e4567-e89b-12d3-a456-426614174009"
+              startDate: "2025-07-12"
+              endDate: "2025-12-31"
+              status: "active"
+      responses:
+        '200':
+          description: Schedule assignment updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ScheduleAssignment'
+              example:
+                data:
+                  id: "b23e4567-e89b-12d3-a456-426614174011"
+                  scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                  permitId: "723e4567-e89b-12d3-a456-426614174007"
+                  busId: "923e4567-e89b-12d3-a456-426614174009"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  status: "active"
+                  createdAt: "2025-07-12T12:23:00+05:30"
+                  updatedAt: "2025-07-12T12:30:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a schedule assignment
+      description: Delete a schedule assignment.
+      operationId: deleteScheduleAssignment
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule assignment ID
+      responses:
+        '200':
+          description: Schedule assignment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Schedule assignment deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.delete permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule assignment not found"
+      security:
+        - bearerAuth: []
+  /schedule-assignments/bulk:
+    post:
+      summary: Create multiple schedule assignments
+      description: Create multiple schedule assignments in a single request.
+      operationId: createBulkScheduleAssignments
+      tags:
+        - Schedule Assignments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  scheduleId:
+                    type: string
+                    format: uuid
+                    example: "523e4567-e89b-12d3-a456-426614174005"
+                  permitId:
+                    type: string
+                    format: uuid
+                    example: "723e4567-e89b-12d3-a456-426614174007"
+                  busId:
+                    type: string
+                    format: uuid
+                    example: "923e4567-e89b-12d3-a456-426614174009"
+                  startDate:
+                    type: string
+                    format: date
+                    example: "2025-07-12"
+                  endDate:
+                    type: string
+                    format: date
+                    example: "2025-12-31"
+                  status:
+                    type: string
+                    enum: [active, inactive]
+                    example: "active"
+                required:
+                  - scheduleId
+                  - permitId
+                  - busId
+                  - startDate
+                  - status
+            example:
+              - scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                permitId: "723e4567-e89b-12d3-a456-426614174007"
+                busId: "923e4567-e89b-12d3-a456-426614174009"
+                startDate: "2025-07-12"
+                endDate: "2025-12-31"
+                status: "active"
+              - scheduleId: "523e4567-e89b-12d3-a456-426614174006"
+                permitId: "723e4567-e89b-12d3-a456-426614174008"
+                busId: "923e4567-e89b-12d3-a456-426614174010"
+                startDate: "2025-07-12"
+                endDate: "2025-12-31"
+                status: "active"
+      responses:
+        '201':
+          description: Schedule assignments created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScheduleAssignment'
+                  meta:
+                    type: object
+                    properties:
+                      createdCount:
+                        type: integer
+                        example: 2
+              example:
+                data:
+                  - id: "b23e4567-e89b-12d3-a456-426614174011"
+                    scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                    permitId: "723e4567-e89b-12d3-a456-426614174007"
+                    busId: "923e4567-e89b-12d3-a456-426614174009"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    status: "active"
+                    createdAt: "2025-07-12T12:23:00+05:30"
+                    updatedAt: "2025-07-12T12:23:00+05:30"
+                  - id: "b23e4567-e89b-12d3-a456-426614174012"
+                    scheduleId: "523e4567-e89b-12d3-a456-426614174006"
+                    permitId: "723e4567-e89b-12d3-a456-426614174008"
+                    busId: "923e4567-e89b-12d3-a456-426614174010"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    status: "active"
+                    createdAt: "2025-07-12T12:23:00+05:30"
+                    updatedAt: "2025-07-12T12:23:00+05:30"
+                meta:
+                  createdCount: 2
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.create permission"
+      security:
+        - bearerAuth: []
+  /schedule-assignments/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a schedule assignment
+      description: Retrieve paginated audit logs for a specific schedule assignment.
+      operationId: getScheduleAssignmentAuditLogs
+      tags:
+        - Schedule Assignments
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule assignment ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the schedule assignment
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T12:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        scheduleId: "523e4567-e89b-12d3-a456-426614174005"
+                        permitId: "723e4567-e89b-12d3-a456-426614174007"
+                        busId: "923e4567-e89b-12d3-a456-426614174009"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedule-assignments.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule assignment not found"
+      security:
+        - bearerAuth: []

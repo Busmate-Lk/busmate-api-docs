@@ -1,0 +1,726 @@
+components:
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "523e4567-e89b-12d3-a456-426614174005"
+        routeGroupId:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        startDate:
+          type: string
+          format: date
+          example: "2025-07-12"
+        endDate:
+          type: string
+          format: date
+          example: "2025-12-31"
+        frequency:
+          type: string
+          enum: [daily, weekly, monthly]
+          example: "daily"
+        times:
+          type: array
+          items:
+            type: string
+            format: time
+            example: "08:00:00+05:30"
+          example:
+            - "08:00:00+05:30"
+            - "12:00:00+05:30"
+        status:
+          type: string
+          enum: [active, expired, inactive]
+          example: "active"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-07-12T11:23:00+05:30"
+      required:
+        - id
+        - routeGroupId
+        - startDate
+        - frequency
+        - times
+        - status
+
+paths:
+  /schedules:
+    get:
+      summary: Retrieve all schedules
+      description: Retrieve a paginated, filtered, and sorted list of schedules.
+      operationId: getSchedules
+      tags:
+        - Schedules
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[routeGroupId]
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by route group ID
+        - name: filter[startDate]
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Filter by start date (e.g., 2025-07-12)
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, inactive]
+          description: Filter by status
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [startDate:asc, startDate:desc, createdAt:asc, createdAt:desc]
+          description: Sort by field (e.g., startDate:asc)
+      responses:
+        '200':
+          description: List of schedules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Schedule'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "523e4567-e89b-12d3-a456-426614174005"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    frequency: "daily"
+                    times:
+                      - "08:00:00+05:30"
+                      - "12:00:00+05:30"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  total: 100
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "UNAUTHORIZED"
+                    message: "Invalid or missing JWT token"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Insufficient permissions"
+      security:
+        - bearerAuth: []
+    post:
+      summary: Create a new schedule
+      description: Create a new schedule.
+      operationId: createSchedule
+      tags:
+        - Schedules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeGroupId:
+                  type: string
+                  format: uuid
+                  example: "223e4567-e89b-12d3-a456-426614174001"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                frequency:
+                  type: string
+                  enum: [daily, weekly, monthly]
+                  example: "daily"
+                times:
+                  type: array
+                  items:
+                    type: string
+                    format: time
+                    example: "08:00:00+05:30"
+                  example:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - routeGroupId
+                - startDate
+                - frequency
+                - times
+                - status
+            example:
+              routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+              startDate: "2025-07-12"
+              endDate: "2025-12-31"
+              frequency: "daily"
+              times:
+                - "08:00:00+05:30"
+                - "12:00:00+05:30"
+              status: "active"
+      responses:
+        '201':
+          description: Schedule created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+              example:
+                data:
+                  id: "523e4567-e89b-12d3-a456-426614174005"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  frequency: "daily"
+                  times:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "INVALID_INPUT"
+                    message: "Route group ID is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.create permission"
+      security:
+        - bearerAuth: []
+  /schedules/{id}:
+    get:
+      summary: Retrieve a specific schedule
+      description: Retrieve details of a specific schedule, including associated assignments.
+      operationId: getSchedule
+      tags:
+        - Schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule ID
+      responses:
+        '200':
+          description: Schedule details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+              example:
+                data:
+                  id: "523e4567-e89b-12d3-a456-426614174005"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  frequency: "daily"
+                  times:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T11:23:00+05:30"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule not found"
+      security:
+        - bearerAuth: []
+    put:
+      summary: Update a schedule
+      description: Update an existing schedule.
+      operationId: updateSchedule
+      tags:
+        - Schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                routeGroupId:
+                  type: string
+                  format: uuid
+                  example: "223e4567-e89b-12d3-a456-426614174001"
+                startDate:
+                  type: string
+                  format: date
+                  example: "2025-07-12"
+                endDate:
+                  type: string
+                  format: date
+                  example: "2025-12-31"
+                frequency:
+                  type: string
+                  enum: [daily, weekly, monthly]
+                  example: "daily"
+                times:
+                  type: array
+                  items:
+                    type: string
+                    format: time
+                    example: "08:00:00+05:30"
+                  example:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                status:
+                  type: string
+                  enum: [active, inactive]
+                  example: "active"
+              required:
+                - routeGroupId
+                - startDate
+                - frequency
+                - times
+                - status
+            example:
+              routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+              startDate: "2025-07-12"
+              endDate: "2025-12-31"
+              frequency: "daily"
+              times:
+                - "08:00:00+05:30"
+                - "12:00:00+05:30"
+              status: "active"
+      responses:
+        '200':
+          description: Schedule updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Schedule'
+              example:
+                data:
+                  id: "523e4567-e89b-12d3-a456-426614174005"
+                  routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                  startDate: "2025-07-12"
+                  endDate: "2025-12-31"
+                  frequency: "daily"
+                  times:
+                    - "08:00:00+05:30"
+                    - "12:00:00+05:30"
+                  status: "active"
+                  createdAt: "2025-07-12T11:23:00+05:30"
+                  updatedAt: "2025-07-12T12:00:00+05:30"
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.update permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+    delete:
+      summary: Delete a schedule
+      description: Delete a schedule, with reference check for assignments.
+      operationId: deleteSchedule
+      tags:
+        - Schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule ID
+      responses:
+        '200':
+          description: Schedule deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Schedule deleted"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.delete permission"
+        '409':
+          description: Conflict due to references
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "CONFLICT"
+                    message: "Cannot delete schedule with active assignments"
+      security:
+        - bearerAuth: []
+  /schedules/bulk:
+    post:
+      summary: Create multiple schedules
+      description: Create multiple schedules in a single request.
+      operationId: createBulkSchedules
+      tags:
+        - Schedules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  routeGroupId:
+                    type: string
+                    format: uuid
+                    example: "223e4567-e89b-12d3-a456-426614174001"
+                  startDate:
+                    type: string
+                    format: date
+                    example: "2025-07-12"
+                  endDate:
+                    type: string
+                    format: date
+                    example: "2025-12-31"
+                  frequency:
+                    type: string
+                    enum: [daily, weekly, monthly]
+                    example: "daily"
+                  times:
+                    type: array
+                    items:
+                      type: string
+                      format: time
+                      example: "08:00:00+05:30"
+                    example:
+                      - "08:00:00+05:30"
+                      - "12:00:00+05:30"
+                  status:
+                    type: string
+                    enum: [active, inactive]
+                    example: "active"
+                required:
+                  - routeGroupId
+                  - startDate
+                  - frequency
+                  - times
+                  - status
+            example:
+              - routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                startDate: "2025-07-12"
+                endDate: "2025-12-31"
+                frequency: "daily"
+                times:
+                  - "08:00:00+05:30"
+                  - "12:00:00+05:30"
+                status: "active"
+              - routeGroupId: "223e4567-e89b-12d3-a456-426614174002"
+                startDate: "2025-07-12"
+                endDate: "2025-12-31"
+                frequency: "weekly"
+                times:
+                  - "09:00:00+05:30"
+                status: "active"
+      responses:
+        '201':
+          description: Schedules created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Schedule'
+                  meta:
+                    type: object
+                    properties:
+                      createdCount:
+                        type: integer
+                        example: 2
+              example:
+                data:
+                  - id: "523e4567-e89b-12d3-a456-426614174005"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    frequency: "daily"
+                    times:
+                      - "08:00:00+05:30"
+                      - "12:00:00+05:30"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                  - id: "523e4567-e89b-12d3-a456-426614174006"
+                    routeGroupId: "223e4567-e89b-12d3-a456-426614174002"
+                    startDate: "2025-07-12"
+                    endDate: "2025-12-31"
+                    frequency: "weekly"
+                    times:
+                      - "09:00:00+05:30"
+                    status: "active"
+                    createdAt: "2025-07-12T11:23:00+05:30"
+                    updatedAt: "2025-07-12T11:23:00+05:30"
+                meta:
+                  createdCount: 2
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.create permission"
+      security:
+        - bearerAuth: []
+  /schedules/{id}/audit:
+    get:
+      summary: Retrieve audit logs for a schedule
+      description: Retrieve paginated audit logs for a specific schedule.
+      operationId: getScheduleAuditLogs
+      tags:
+        - Schedules
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Schedule ID
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: filter[action]
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete]
+          description: Filter by action
+      responses:
+        '200':
+          description: Audit logs for the schedule
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditLog'
+                  meta:
+                    $ref: '#/components/schemas/Meta'
+              example:
+                data:
+                  - id: "323e4567-e89b-12d3-a456-426614174002"
+                    action: "create"
+                    userId: "423e4567-e89b-12d3-a456-426614174003"
+                    timestamp: "2025-07-12T11:23:00+05:30"
+                    details:
+                      previous: {}
+                      current:
+                        routeGroupId: "223e4567-e89b-12d3-a456-426614174001"
+                        startDate: "2025-07-12"
+                meta:
+                  total: 10
+                  page: 1
+                  limit: 20
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "FORBIDDEN"
+                    message: "Requires schedules.audit permission"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                errors:
+                  - code: "NOT_FOUND"
+                    message: "Schedule not found"
+      security:
+        - bearerAuth: []
